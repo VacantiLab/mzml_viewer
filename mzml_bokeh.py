@@ -13,6 +13,7 @@ MZML = mzml.read('/Users/nate/Dropbox/Research/Vacanti_Laboratory/mzml_files/202
 intensity = np.zeros(18440)
 time = np.zeros(18440)
 n_intensities = np.zeros(18440)
+most_intensities = 28463
 
 MyDict = {}
 #xvalues = np.arange(100,3000,0.0001)
