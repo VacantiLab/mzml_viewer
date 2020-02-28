@@ -8,31 +8,36 @@ from bokeh.layouts import column, row, layout
 from bokeh.models import ColumnDataSource, Slider, TextInput
 from bokeh.plotting import figure
 
-MZML = mzml.read('1051x_peptides_50nmol.mzML',dtype=dict)
+MZML = mzml.read('/Users/nate/Dropbox/Research/Vacanti_Laboratory/mzml_files/20200226_1522_HeLa.mzML',dtype=dict)
 
-intensity = np.zeros(12950)
-time = np.zeros(12950)
+intensity = np.zeros(18440)
+time = np.zeros(18440)
+n_intensities = np.zeros(18440)
 
 MyDict = {}
-xvalues = np.arange(100,3000,0.0001)
-n_mzs = len(xvalues)
-MyDict['x'] = xvalues
+#xvalues = np.arange(100,3000,0.0001)
+#n_mzs = len(xvalues)
+#MyDict['x'] = xvalues
 i = 0
 for key in MZML:
     time[i] = float(key['scanList']['scan'][0]['scan start time'])
-    mzs = np.round(key['m/z array'],decimals=4)
-    mz_indices = np.isin(xvalues,mzs)
-    intensities = np.zeros(n_mzs)
-    intensities[mz_indices] = key['intensity array']
-    if i==0:
-        MyDict['y'] = copy(intensities[mz_indices])
-    MyDict1['x'+'%.3f'%(time[i])] = np.round(key['m/z array'],decimals=4)
-    MyDict1['y'+'%.3f'%(time[i])] = key['intensity array']
+    #mzs = np.round(key['m/z array'],decimals=4)
+    #mz_indices = np.isin(xvalues,mzs)
+    #intensities = np.zeros(n_mzs)
+    #intensities[mz_indices] = key['intensity array']
+    #if i==0:
+    #    MyDict['y'] = copy(intensities[mz_indices])
+    MyDict['x'+'%.3f'%(time[i])] = key['m/z array']
+    MyDict['y'+'%.3f'%(time[i])] = key['intensity array']
+    n_intensities[i] = len(MyDict['y'+'%.3f'%(time[i])])
     intensity[i] = sum(key['intensity array'])
     i = i+1
     print(i)
 
 n_keys = i
+most_intensities = max(n_intensities)
+
+pdb.set_trace()
 
 source_dict = {'x':time, 'y':intensity}
 source = ColumnDataSource(data=source_dict)
