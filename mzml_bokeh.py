@@ -11,7 +11,7 @@ from bokeh.events import DoubleTap
 
 # bokeh serve --show mzml_bokeh.py
 
-MZML = mzml.read('/Users/nate/Dropbox/Research/Vacanti_Laboratory/mzml_files/20200226_1522_HeLa.mzML',dtype=dict)
+MZML = mzml.read('/Users/nate/Dropbox/Research/Vacanti_Laboratory/mzml_files/20200226_1522_HeLa_NoFilters.mzML',dtype=dict)
 
 tic = np.zeros(18440)
 time = np.zeros(18440)
@@ -68,8 +68,8 @@ ic_mz_plot_source = ColumnDataSource(data=ic_mz_plot_dict)
 print('done sourcing 2')
 
 ic_mz_plot = figure(title='intensity vs. mz', x_axis_label='m/z',y_axis_label='ion counts',plot_width=1000,plot_height=300)
-#ic_mz_plot.line('x','y',source=ic_mz_plot_source,color='firebrick')
-ic_mz_plot.vbar(x='x', bottom=0, width=0.1, top='y',color='firebrick',source=ic_mz_plot_source)
+ic_mz_plot.line('x','y',source=ic_mz_plot_source,color='firebrick')
+#ic_mz_plot.vbar(x='x', bottom=0, width=0.1, top='y',color='firebrick',source=ic_mz_plot_source)
 
 # #add a dot where the click happened
 # coordList=[]
