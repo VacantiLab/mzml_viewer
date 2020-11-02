@@ -17,8 +17,11 @@ from Collapse import Collapse
 
 # bokeh serve --show mzml_bokeh_mzs.py --port 99
 
+#limit the mz values shown
 low_mz = 105
 high_mz = 108
+
+#specify the last scan number considered (corresponding to retention time, for speed)
 BreakScan = 10000
 
 #mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/mzml_files/QE1_QC_HeLa_20200225_r2.mzML'
