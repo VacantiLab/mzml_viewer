@@ -11,18 +11,33 @@ from bokeh.models import ColumnDataSource, Slider, TextInput
 from bokeh.plotting import figure
 from bokeh.events import DoubleTap
 
-# bokeh serve --show mzml_bokeh.py
+from Collapse import Collapse
+
+
+# bokeh serve --show mzml_bokeh_mzs.py --port 99
+
+low_mz = 105
+high_mz = 108
+BreakScan = 10000
+
 #mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/mzml_files/QE1_QC_HeLa_20200225_r2.mzML'
-mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/2018_1016_02_filtered.mzML'
+mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/2018_1016_02.mzML'
 
 MZML = mzml.read(mzml_file_directory,dtype=dict)
 n_intensities_array = np.array([])
 i=0
 for key in MZML:
-    n_intensities_key = len(np.array(key['m/z array'],dtype='float'))
+    xarray = np.array(key['m/z array'],dtype='float')
+    xarray = np.round(xarray,decimals=3)
+    indices = (xarray > low_mz) & (xarray < high_mz)
+    xarray = xarray[indices]
+    xarray = np.unique(xarray)
+    n_intensities_key = len(xarray)
     n_intensities_array = np.append(n_intensities_array,n_intensities_key)
     i = i+1
     print(i)
+    if i>BreakScan:
+        break
 most_intensities = int(max(n_intensities_array))
 
 MZML = mzml.read(mzml_file_directory,dtype=dict)
@@ -34,23 +49,31 @@ for key in MZML:
     time_point = float(key['scanList']['scan'][0]['scan start time'])
     time = np.append(time,time_point)
     xarray = np.array(key['m/z array'],dtype='float') #these must be redefined as type 'float' from 'object' so that the 'maximum' attribute works in np.pad
-    yarray = np.array(key['intensity array'],dtype='float') #these must be redefined as type 'float' from 'object' so that the 'maximum' attribute works in np.pad
-    n_zeros = most_intensities - len(xarray)
-    xarray = np.pad(xarray,[0,n_zeros],'maximum')
-    yarray = np.pad(yarray,[0,n_zeros],'constant')
+    xarray = np.round(xarray,decimals=3)
+    indices = (xarray > low_mz) & (xarray < high_mz)
+    if sum(indices >0):
+        xarray = xarray[indices]
+        yarray = np.array(key['intensity array'],dtype='float') #these must be redefined as type 'float' from 'object' so that the 'maximum' attribute works in np.pad
+        yarray = yarray[indices]
+        xarray,yarray = Collapse(xarray,yarray)
+        n_zeros = most_intensities - len(xarray)
+        xarray = np.pad(xarray,[0,n_zeros],'maximum')
+        yarray = np.pad(yarray,[0,n_zeros],'constant')
 
-    if i==0:
-        ic_mz_plot_dict = {}
-        ic_mz_plot_dict['x'] = xarray
-        ic_mz_plot_dict['y'] = yarray
+        if i==0:
+            ic_mz_plot_dict = {}
+            ic_mz_plot_dict['x'] = xarray
+            ic_mz_plot_dict['y'] = yarray
 
-    ic_mz_dict['x'+'%.3f'%(time[i])] = xarray
-    ic_mz_dict['y'+'%.3f'%(time[i])] = yarray
+        ic_mz_dict['x'+'%.3f'%(time[i])] = xarray
+        ic_mz_dict['y'+'%.3f'%(time[i])] = yarray
 
-    tic = np.append(tic,sum(key['intensity array']))
+        tic = np.append(tic,sum(yarray))
 
     i = i+1
     print(i)
+    if i>BreakScan:
+        break
 
 # tic = np.zeros(n_keys)
 # time = np.zeros(n_keys)
