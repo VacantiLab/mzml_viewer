@@ -1,4 +1,5 @@
 #This script plots the mzml files from proteomics experiments
+#   This script is an iteration where I am trying to specify mzs to see the time trace
 
 import numpy as np
 from pyteomics import mzml, auxiliary
