@@ -38,6 +38,9 @@ time_intensity_dict = {}
 time_mz_dict_limited = {}
 time_intensity_dict_limited = {}
 
+# Initialize the total ion chromatograph array
+tic_array = np.array([])
+
 # Iterate through the scnas of the iterable object of the mzML file
 i=0
 for key in MZML:
@@ -50,6 +53,10 @@ for key in MZML:
 
     # get the intensities associated with those mz values
     intensities = np.array(key['intensity array'],dtype='float')
+
+    # get the value of the sum of all ions at the current time point
+    tic = sum(intensities)
+    tic_array = np.append(tic_array,tic)
 
     # store the mz values and intensity values in their corresponding dictionaries
     time_mz_dict[time_point] = mzs
@@ -78,7 +85,7 @@ unique_mzs = np.sort(unique_mzs)
 #     Each entry will be an array of intensities
 #         Each position of the array is associated with the time point at the same position in the time_array
 n_scans = i
-mz_time_dict = {key:np.zeros(n_scans) for key in unique_mzs}
+mz_intensity_dict = {key:np.zeros(n_scans) for key in unique_mzs}
 
 # Fill the dictionary where unique mz values are the keys
 # Iterate over the time points
@@ -93,77 +100,52 @@ for time_point in time_array:
         #     Each unique mz value key is associated with an array with intensity entries for each time point
         #
         CurrentIntensity = time_intensity_dict_limited[time_point][mz_index]
-        mz_time_dict[mz][time_point_index] = CurrentIntensity
+        mz_intensity_dict[mz][time_point_index] = CurrentIntensity
         mz_index = mz_index + 1
 
     # Iterate to the next time point
     time_point_index = time_point_index + 1
     print('time point index = '+ str(time_point_index))
 
-set_trace()
+# place the total ion chromatograph in the dictionary with mz values as keys
+mz_intensity_dict['tic'] = tic_array
 
+# Initialize the dictionary containing the data for the intensity vs. time plot
+intensity_vs_time_plot_dict = {'x':time_array,'y':mz_intensity_dict['tic']}
+intensity_vs_time_plot_source = ColumnDataSource(data=intensity_vs_time_plot_dict)
+# Create the intensity vs. time plot
+intensity_vs_time_plot=figure(title='total ion count vs. retention time',plot_height=300, plot_width=1000)
+intensity_vs_time_plot.line('x','y',source=intensity_vs_time_plot_source)
 
+# Initialize the dictionary containing data for the intensity vs. mz plot
+InitialTimePoint = time_array[0]
+intesity_vs_mz_plot_dict = {}
+intesity_vs_mz_plot_dict['x'] = time_mz_dict[InitialTimePoint]
+intesity_vs_mz_plot_dict['y'] = time_intensity_dict[InitialTimePoint]
+intesity_vs_mz_plot_source = ColumnDataSource(data=intesity_vs_mz_plot_dict)
+# Create the intensity vs. mz plot
+intesity_vs_mz_plot = figure(title='intensity vs. mz', x_axis_label='m/z',y_axis_label='ion counts',plot_width=1000,plot_height=300)
+intesity_vs_mz_plot.line('x','y',source=intesity_vs_mz_plot_source,color='firebrick')
 
-MZML = mzml.read(mzml_file_directory,dtype=dict)
-time = np.array([])
-tic = np.array([])
-ic_mz_dict = {}
-i = 0
-for key in MZML:
-    time_point = float(key['scanList']['scan'][0]['scan start time'])
-    time = np.append(time,time_point)
-    xarray = np.array(key['m/z array'],dtype='float') #these must be redefined as type 'float' from 'object' so that the 'maximum' attribute works in np.pad
-    yarray = np.array(key['intensity array'],dtype='float') #these must be redefined as type 'float' from 'object' so that the 'maximum' attribute works in np.pad
-    n_zeros = most_intensities - len(xarray)
-    #xarray = np.pad(xarray,[0,n_zeros],'maximum')
-    #yarray = np.pad(yarray,[0,n_zeros],'constant')
-
-    if i==0:
-        ic_mz_plot_dict = {}
-        ic_mz_plot_dict['x'] = xarray
-        ic_mz_plot_dict['y'] = yarray
-
-    ic_mz_dict['x'+'%.3f'%(time[i])] = xarray
-    ic_mz_dict['y'+'%.3f'%(time[i])] = yarray
-
-    tic = np.append(tic,sum(key['intensity array']))
-
-    i = i+1
-    print(i)
-
-tic_dict = {'x':time, 'y':tic}
-tic_source = ColumnDataSource(data=tic_dict)
-
-tic_plot=figure(title='total ion count vs. retention time',plot_height=300, plot_width=1000)
-tic_plot.line('x','y',source=tic_source)
-
-
-print('sourcing 2')
-ic_mz_plot_source = ColumnDataSource(data=ic_mz_plot_dict)
-print('done sourcing 2')
-
-ic_mz_plot = figure(title='intensity vs. mz', x_axis_label='m/z',y_axis_label='ion counts',plot_width=1000,plot_height=300)
-ic_mz_plot.line('x','y',source=ic_mz_plot_source,color='firebrick')
-
+# Create the callback to change the time point from which the data for the intensity vs. mz plot is taken
+#     Double clicking on the intensity vs. time plot selects this new time point
 def callback(event):
     rt_click = event.x
-    rt_index = np.argmin(abs(time-rt_click))
-    rt = time[rt_index]
-    x_index = 'x'+'%.3f'%(rt)
-    y_index = 'y'+'%.3f'%(rt)
-    ic_mz_plot_source.data = dict(x=ic_mz_dict[x_index], y=ic_mz_dict[y_index])
-tic_plot.on_event(DoubleTap, callback)
+    rt_index = np.argmin(abs(time_array-rt_click))
+    rt = time_array[rt_index]
+    x_index = rt
+    y_index = rt
+    intesity_vs_mz_plot_source.data = dict(x=time_mz_dict[x_index], y=time_intensity_dict[y_index])
+intensity_vs_time_plot.on_event(DoubleTap, callback)
 
 
-# time = np.array([1,2,3])
-# intensity = np.array([1,2,3])
-# source_dict = {'x':time, 'y':intensity}
-# source = ColumnDataSource(data=source_dict)
+
+
 
 
 l = layout([
-  [tic_plot],
-  [ic_mz_plot],
+  [intensity_vs_time_plot],
+  [intesity_vs_mz_plot],
 ], sizing_mode='fixed')
 
 curdoc().add_root(l)
