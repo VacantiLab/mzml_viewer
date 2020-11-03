@@ -1,4 +1,7 @@
-#This script plots the mzml files from proteomics experiments
+# This script plots the mzml files
+# It supplies boxes to plot mz-time traces within a certain window
+#     The window is hard-coded for now
+# Call with: # bokeh serve --show mzml_bokeh.py --port 2001
 
 import numpy as np
 from pyteomics import mzml, auxiliary
@@ -6,19 +9,18 @@ from pdb import set_trace
 from copy import copy
 
 from bokeh.io import curdoc
-from bokeh.layouts import column, row, layout
-from bokeh.models import ColumnDataSource, Slider, TextInput
+from bokeh.layouts import column, row, layout, widgetbox
+from bokeh.models import ColumnDataSource, Slider, TextInput, Label
 from bokeh.plotting import figure
 from bokeh.events import DoubleTap
 
-# bokeh serve --show mzml_bokeh.py
 #mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/mzml_files/QE1_QC_HeLa_20200225_r2.mzML'
-mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/2018_1016_02_filtered.mzML'
+mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/2018_1016_02.mzML'
 
 # Set the lower and upper bounds on the mzs for which a time trace will be available
 #     This is necessary because the number of mzs in high resolution data is over 1 million and the script will take too long to create the necessary dictionary
-mzLower = 105
-mzUpper = 110
+mzLower = 240
+mzUpper = 245
 
 # Read the mzML file as an iterable object
 MZML = mzml.read(mzml_file_directory,dtype=dict)
@@ -110,12 +112,25 @@ for time_point in time_array:
 # place the total ion chromatograph in the dictionary with mz values as keys
 mz_intensity_dict['tic'] = tic_array
 
+# place a blank array in the dictionary with mz values as keys
+blank_data = np.zeros(n_scans)
+for i in range(0,len(blank_data)):
+    blank_data[i] = np.nan
+mz_intensity_dict['blank'] = blank_data
+
 # Initialize the dictionary containing the data for the intensity vs. time plot
+#     Do so for both lines plotted
 intensity_vs_time_plot_dict = {'x':time_array,'y':mz_intensity_dict['tic']}
 intensity_vs_time_plot_source = ColumnDataSource(data=intensity_vs_time_plot_dict)
+
+intensity_vs_time_plot_dict2 = {'x':time_array,'y':mz_intensity_dict['blank']}
+intensity_vs_time_plot_source2 = ColumnDataSource(data=intensity_vs_time_plot_dict)
+
 # Create the intensity vs. time plot
+#     There are two line objects because there are two lines plotted
 intensity_vs_time_plot=figure(title='total ion count vs. retention time',plot_height=300, plot_width=1000)
-intensity_vs_time_plot.line('x','y',source=intensity_vs_time_plot_source)
+intensity_vs_time_plot.line('x','y',source=intensity_vs_time_plot_source,color='blue')
+intensity_vs_time_plot.line('x','y',source=intensity_vs_time_plot_source2,color='red')
 
 # Initialize the dictionary containing data for the intensity vs. mz plot
 InitialTimePoint = time_array[0]
@@ -138,12 +153,62 @@ def callback(event):
     intesity_vs_mz_plot_source.data = dict(x=time_mz_dict[x_index], y=time_intensity_dict[y_index])
 intensity_vs_time_plot.on_event(DoubleTap, callback)
 
+# Create the callback to change the mz plotted for the 1st line
+def UpdateMZ(attrname, old, new):
+    BoxValue = MZ1.value
+    BinValue = float(MZ1Bin.value)
+    if (BoxValue != 'tic') & (BoxValue != 'blank'):
+        mz = float(BoxValue)
+        mzRange = np.array([mz-BinValue,mz+BinValue])
+        MZsInRangeIndices = (unique_mzs >= mzRange[0]) & (unique_mzs <= mzRange[1])
+        MZsInRange = unique_mzs[MZsInRangeIndices]
+        NewY = np.zeros(n_scans)
+        for value in MZsInRange:
+            NewY = NewY + mz_intensity_dict[value]
+        y = NewY
+    if BoxValue == 'tic':
+        y = mz_intensity_dict['tic']
+    if BoxValue == 'blank':
+        y = mz_intensity_dict['blank']
+    intensity_vs_time_plot_source.data = dict(x=time_array,y=y)
 
+# Create the callback to change the mz plotted for the 2nd line
+def UpdateMZ2(attrname, old, new):
+    BoxValue = MZ2.value
+    BinValue = float(MZ2Bin.value)
+    if (BoxValue != 'tic') & (BoxValue != 'blank'):
+        mz = float(BoxValue)
+        mzRange = np.array([mz-BinValue,mz+BinValue])
+        MZsInRangeIndices = (unique_mzs >= mzRange[0]) & (unique_mzs <= mzRange[1])
+        MZsInRange = unique_mzs[MZsInRangeIndices]
+        NewY = np.zeros(n_scans)
+        for value in MZsInRange:
+            NewY = NewY + mz_intensity_dict[value]
+        y = NewY
+    if BoxValue == 'tic':
+        y = mz_intensity_dict['tic']
+    if BoxValue == 'blank':
+        y = mz_intensity_dict['blank']
+    intensity_vs_time_plot_source2.data = dict(x=time_array,y=y)
 
+# Create the first text box set
+#     The Bin is the box that sets the range of the mz values included
+MZ1 = TextInput(title= str(mzLower)+'-'+str(mzUpper), value=str('tic')) #the textbox widget, the value must be a string
+MZ1.on_change('value',UpdateMZ)
+MZ1Bin = TextInput(title='MZ1 Bin', value=str(0))
+MZ1Bin.on_change('value',UpdateMZ)
 
+# Create the second text box set
+#     The Bin is the box that sets the range of the mz values included
+MZ2 = TextInput(title= str(mzLower)+'-'+str(mzUpper), value=str('tic')) #the textbox widget, the value must be a string
+MZ2.on_change('value',UpdateMZ2)
+MZ2Bin = TextInput(title='MZ2 Bin', value=str(0))
+MZ2Bin.on_change('value',UpdateMZ2)
 
 
 l = layout([
+  [MZ1,MZ1Bin],
+  [MZ2,MZ2Bin],
   [intensity_vs_time_plot],
   [intesity_vs_mz_plot],
 ], sizing_mode='fixed')

@@ -13,7 +13,7 @@ from bokeh.events import DoubleTap
 
 # bokeh serve --show mzml_bokeh.py
 #mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/mzml_files/QE1_QC_HeLa_20200225_r2.mzML'
-mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/2018_1016_02_filtered.mzML'
+mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/2018_1016_02.mzML'
 
 MZML = mzml.read(mzml_file_directory,dtype=dict)
 n_intensities_array = np.array([])
