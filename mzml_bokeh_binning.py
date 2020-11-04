@@ -1,7 +1,7 @@
 # This script plots the mzml files
 # It supplies boxes to plot mz-time traces within a certain window
 #     The window is hard-coded for now
-# Call with: # bokeh serve --show mzml_bokeh.py --port 2001
+# Call with: # bokeh serve --show mzml_bokeh_binning.py --port 2001
 
 import numpy as np
 from pyteomics import mzml, auxiliary
@@ -15,7 +15,7 @@ from bokeh.plotting import figure
 from bokeh.events import DoubleTap
 
 #mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/mzml_files/QE1_QC_HeLa_20200225_r2.mzML'
-mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/2018_1016_02.mzML'
+mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/2018_1016_10.mzML'
 
 # Set the lower and upper bounds on the mzs for which a time trace will be available
 #     This is necessary because the number of mzs in high resolution data is over 1 million and the script will take too long to create the necessary dictionary
@@ -78,7 +78,8 @@ for key in MZML:
     unique_mzs = np.unique(unique_mzs)
 
     i = i+1
-    print(i)
+    if i%100 == 0:
+        print(i)
 
 # sort the array of unique mz values from smallest to largest
 unique_mzs = np.sort(unique_mzs)
@@ -107,7 +108,8 @@ for time_point in time_array:
 
     # Iterate to the next time point
     time_point_index = time_point_index + 1
-    print('time point index = '+ str(time_point_index))
+    if time_point_index%100 == 0:
+        print('time point index = '+ str(time_point_index))
 
 # place the total ion chromatograph in the dictionary with mz values as keys
 mz_intensity_dict['tic'] = tic_array
