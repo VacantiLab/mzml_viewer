@@ -1,6 +1,7 @@
 # This script plots the mzml files
 # It supplies boxes to plot mz-time traces within a certain window
 #     The window is hard-coded for now
+# This script requires the files created with Convert()
 # Call with: # bokeh serve --show mzml_bokeh_binning.py --port 2001
 
 import numpy as np
@@ -16,7 +17,8 @@ from bokeh.events import DoubleTap
 
 from Convert import Convert
 
-StorageFile = '/Users/nate/Desktop/temporary/2018_1016_10_file1.p'
+print('loading dictionary 1')
+StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file1.p'
 with open(StorageFile, 'rb') as PickleFile:
     input1 = pickle.load(PickleFile)
 
@@ -28,51 +30,28 @@ time_mz_dict_limited = input1[4]
 time_intensity_dict_limited = input1[5]
 tic_array = input1[6]
 n_scans = input1[7]
-
-mzLower=240
-mzUpper=245
+mzLower=input1[8]
+mzUpper=input1[9]
 
 # sort the array of unique mz values from smallest to largest
 unique_mzs = np.sort(unique_mzs)
 
-# Initialize a dictionary where the keys are the unique mz values
-#     Each entry will be an array of intensities
-#         Each position of the array is associated with the time point at the same position in the time_array
-print('initializing mz_intensity_dict')
-mz_intensity_dict = {key:np.array([]) for key in unique_mzs}
-print('initializing mz_TimePointIndex_dict')
-mz_TimePointIndex_dict = {key:np.array([]) for key in unique_mzs}
-
-# Fill the dictionary where unique mz values are the keys
-# Iterate over the time points
-time_point_index = 0
-for time_point in time_array:
-    # Iterate over the mz values scanned at the current time point
-    #     This is performed in the limited time_mz_dict because it was created to only hold the mz values of interest
-    #       All mz values cannot be considered because there are too many
-    mz_index = 0
-    for mz in time_mz_dict_limited[time_point]:
-        # Fill the dictionary with unique mz values as the keys
-        #     Each unique mz value key is associated with an array with intensity entries for each time point
-        #
-        CurrentIntensity = time_intensity_dict_limited[time_point][mz_index]
-        mz_intensity_dict[mz] = np.append(mz_intensity_dict[mz],CurrentIntensity)
-        mz_TimePointIndex_dict[mz] = np.append(mz_TimePointIndex_dict[mz],time_point_index)
-        mz_index = mz_index + 1
-
-    # Iterate to the next time point
-    time_point_index = time_point_index + 1
-    if time_point_index%100 == 0:
-        print('time point index = '+ str(time_point_index))
-
-
-# # place the total ion chromatograph in the dictionary with mz values as keys
-# mz_intensity_dict['tic'] = tic_array
-#
-# place a blank array in the dictionary with mz values as keys
+# create a blank array in the dictionary with mz values as keys
 blank_data = np.zeros(n_scans)
 for i in range(0,len(blank_data)):
     blank_data[i] = np.nan
+
+print('loading dictionary 2')
+StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file2.p'
+with open(StorageFile, 'rb') as PickleFile:
+    input2 = pickle.load(PickleFile)
+mz_TimePointIndex_dict = input2
+
+print('loading dictionary 3')
+StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file3.p'
+with open(StorageFile, 'rb') as PickleFile:
+    input3 = pickle.load(PickleFile)
+mz_intensity_dict = input3
 
 
 # Initialize the dictionary containing the data for the intensity vs. time plot
@@ -113,6 +92,8 @@ intensity_vs_time_plot.on_event(DoubleTap, callback)
 # Create the callback to change the mz plotted for the 1st line
 def UpdateMZ(attrname, old, new):
     BoxValue = MZ1.value
+    # Obtain the mz range that is plotted
+    #     The range is centered on BoxValue
     BinValue = float(MZ1Bin.value)
     if (BoxValue != 'tic') & (BoxValue != 'blank'):
         mz = float(BoxValue)
@@ -120,9 +101,15 @@ def UpdateMZ(attrname, old, new):
         MZsInRangeIndices = (unique_mzs >= mzRange[0]) & (unique_mzs <= mzRange[1])
         MZsInRange = unique_mzs[MZsInRangeIndices]
         NewY = np.zeros(n_scans)
+        # Sum the intensities for all mz values within the range for all time points
         for mz in MZsInRange:
+            # Initialize the counter for the position of the array corresponding to the mz key of the dictionary containing intensities
+            TimeIndexIterator = 0
+            # Iterate through the indices of time_array where an intensity for the current mz is recoreded
             for TimeIndex in mz_TimePointIndex_dict[mz]:
-                NewY[TimeIndex] = NewY[TimeIndex] + mz_intensity_dict[mz][TimeIndex]
+                TimeIndex = TimeIndex.astype('int')
+                NewY[TimeIndex] = NewY[TimeIndex] + mz_intensity_dict[mz][TimeIndexIterator]
+                TimeIndexIterator = TimeIndexIterator + 1
         y = NewY
     if BoxValue == 'tic':
         y = tic_array
@@ -140,8 +127,12 @@ def UpdateMZ2(attrname, old, new):
         MZsInRangeIndices = (unique_mzs >= mzRange[0]) & (unique_mzs <= mzRange[1])
         MZsInRange = unique_mzs[MZsInRangeIndices]
         NewY = np.zeros(n_scans)
-        for value in MZsInRange:
-            NewY = NewY + mz_intensity_dict[value]
+        for mz in MZsInRange:
+            TimeIndexIterator = 0
+            for TimeIndex in mz_TimePointIndex_dict[mz]:
+                TimeIndex = TimeIndex.astype('int')
+                NewY[TimeIndex] = NewY[TimeIndex] + mz_intensity_dict[mz][TimeIndexIterator]
+                TimeIndexIterator = TimeIndexIterator + 1
         y = NewY
     if BoxValue == 'tic':
         y = tic_array

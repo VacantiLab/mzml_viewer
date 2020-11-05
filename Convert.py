@@ -1,14 +1,15 @@
 def Convert(mzLower,mzUpper):
 # Inputs:
-    # Set the lower and upper bounds on the mzs for which a time trace will be available
-    #     This is necessary because the number of mzs in high resolution data is over 1 million and the script will take too long to create the necessary dictionary
+#   mzLower: This is the lower bound of the mz range that can be plotted vs. time
+#   mzUpper: This is the upper bound of the mz range that can be plotted vs. time
+# This function opens a mzML file that is hard-coded for now
 
     from pyteomics import mzml, auxiliary
     import numpy as np
     import pickle
     from pdb import set_trace
 
-    #mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/mzml_files/QE1_QC_HeLa_20200225_r2.mzML'
+    # Specify the mzml file
     mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/2018_1016_10.mzML'
 
     # Read the mzML file as an iterable object
@@ -72,10 +73,53 @@ def Convert(mzLower,mzUpper):
 
     n_scans=i
 
-    output = [time_array,unique_mzs,time_mz_dict,time_intensity_dict,time_mz_dict_limited,time_intensity_dict_limited,tic_array,n_scans]
-    StorageFile = '/Users/nate/Desktop/temporary/2018_1016_10_file1.p'
+    # save the desired outputs as a pickle file
+    output = [time_array,unique_mzs,time_mz_dict,time_intensity_dict,time_mz_dict_limited,time_intensity_dict_limited,tic_array,n_scans,mzLower,mzUpper]
+    StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file1.p'
     with open(StorageFile, 'wb') as PickleFile:
         pickle.dump(output,PickleFile)
 
+    # sort the array of unique mz values from smallest to largest
+    unique_mzs = np.sort(unique_mzs)
+
+    # Initialize a dictionary where the keys are the unique mz values
+    #     Each entry will be an array of intensities
+    #         Each position of the array is associated with the time point at the same position in the time_array
+    print('initializing mz_intensity_dict')
+    mz_intensity_dict = {key:np.array([]) for key in unique_mzs}
+    print('initializing mz_TimePointIndex_dict')
+    mz_TimePointIndex_dict = {key:np.array([]) for key in unique_mzs}
+
+    # Fill the dictionary where unique mz values are the keys
+    # Iterate over the time points
+    time_point_index = 0
+    for time_point in time_array:
+        # Iterate over the mz values scanned at the current time point
+        #     This is performed in the limited time_mz_dict because it was created to only hold the mz values of interest
+        #       All mz values cannot be considered because there are too many
+        mz_index = 0
+        for mz in time_mz_dict_limited[time_point]:
+            # Fill the dictionaries with unique mz values as the keys
+            #     One dictionary will hold intensities for every mz value
+            #     The other dictionary will hold the corresponding indices of the time_array for those intensities
+            CurrentIntensity = time_intensity_dict_limited[time_point][mz_index]
+            # Make an array holding intensities corresponding to the mz value that specifies the key to this dictionary
+            mz_intensity_dict[mz] = np.append(mz_intensity_dict[mz],CurrentIntensity)
+            # Make an array holding time point indices corresponding to the above intensities
+            mz_TimePointIndex_dict[mz] = np.append(mz_TimePointIndex_dict[mz],time_point_index)
+            mz_index = mz_index + 1
+
+        # Iterate to the next time point
+        time_point_index = time_point_index + 1
+        if time_point_index%100 == 0:
+            print('time point index = '+ str(time_point_index))
+
+    StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file2.p'
+    with open(StorageFile, 'wb') as PickleFile:
+        pickle.dump(mz_TimePointIndex_dict,PickleFile)
+
+    StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file3.p'
+    with open(StorageFile, 'wb') as PickleFile:
+        pickle.dump(mz_intensity_dict,PickleFile)
 
     #return(time_array,unique_mzs,time_mz_dict,time_intensity_dict,time_mz_dict_limited,time_intensity_dict_limited,tic_array,n_scans)
