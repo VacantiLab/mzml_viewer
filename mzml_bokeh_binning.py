@@ -38,7 +38,10 @@ unique_mzs = np.sort(unique_mzs)
 # Initialize a dictionary where the keys are the unique mz values
 #     Each entry will be an array of intensities
 #         Each position of the array is associated with the time point at the same position in the time_array
-mz_intensity_dict = {key:np.zeros(n_scans) for key in unique_mzs}
+print('initializing mz_intensity_dict')
+mz_intensity_dict = {key:np.array([]) for key in unique_mzs}
+print('initializing mz_TimePointIndex_dict')
+mz_TimePointIndex_dict = {key:np.array([]) for key in unique_mzs}
 
 # Fill the dictionary where unique mz values are the keys
 # Iterate over the time points
@@ -53,7 +56,8 @@ for time_point in time_array:
         #     Each unique mz value key is associated with an array with intensity entries for each time point
         #
         CurrentIntensity = time_intensity_dict_limited[time_point][mz_index]
-        mz_intensity_dict[mz][time_point_index] = CurrentIntensity
+        mz_intensity_dict[mz] = np.append(mz_intensity_dict[mz],CurrentIntensity)
+        mz_TimePointIndex_dict[mz] = np.append(mz_TimePointIndex_dict[mz],time_point_index)
         mz_index = mz_index + 1
 
     # Iterate to the next time point
@@ -61,22 +65,22 @@ for time_point in time_array:
     if time_point_index%100 == 0:
         print('time point index = '+ str(time_point_index))
 
-# place the total ion chromatograph in the dictionary with mz values as keys
-mz_intensity_dict['tic'] = tic_array
 
+# # place the total ion chromatograph in the dictionary with mz values as keys
+# mz_intensity_dict['tic'] = tic_array
+#
 # place a blank array in the dictionary with mz values as keys
 blank_data = np.zeros(n_scans)
 for i in range(0,len(blank_data)):
     blank_data[i] = np.nan
-mz_intensity_dict['blank'] = blank_data
 
 
 # Initialize the dictionary containing the data for the intensity vs. time plot
 #     Do so for both lines plotted
-intensity_vs_time_plot_dict = {'x':time_array,'y':mz_intensity_dict['tic']}
+intensity_vs_time_plot_dict = {'x':time_array,'y':tic_array}
 intensity_vs_time_plot_source = ColumnDataSource(data=intensity_vs_time_plot_dict)
 
-intensity_vs_time_plot_dict2 = {'x':time_array,'y':mz_intensity_dict['blank']}
+intensity_vs_time_plot_dict2 = {'x':time_array,'y':blank_data}
 intensity_vs_time_plot_source2 = ColumnDataSource(data=intensity_vs_time_plot_dict)
 
 # Create the intensity vs. time plot
@@ -116,13 +120,14 @@ def UpdateMZ(attrname, old, new):
         MZsInRangeIndices = (unique_mzs >= mzRange[0]) & (unique_mzs <= mzRange[1])
         MZsInRange = unique_mzs[MZsInRangeIndices]
         NewY = np.zeros(n_scans)
-        for value in MZsInRange:
-            NewY = NewY + mz_intensity_dict[value]
+        for mz in MZsInRange:
+            for TimeIndex in mz_TimePointIndex_dict[mz]:
+                NewY[TimeIndex] = NewY[TimeIndex] + mz_intensity_dict[mz][TimeIndex]
         y = NewY
     if BoxValue == 'tic':
-        y = mz_intensity_dict['tic']
+        y = tic_array
     if BoxValue == 'blank':
-        y = mz_intensity_dict['blank']
+        y = blank_data
     intensity_vs_time_plot_source.data = dict(x=time_array,y=y)
 
 # Create the callback to change the mz plotted for the 2nd line
@@ -139,9 +144,9 @@ def UpdateMZ2(attrname, old, new):
             NewY = NewY + mz_intensity_dict[value]
         y = NewY
     if BoxValue == 'tic':
-        y = mz_intensity_dict['tic']
+        y = tic_array
     if BoxValue == 'blank':
-        y = mz_intensity_dict['blank']
+        y = blank_data
     intensity_vs_time_plot_source2.data = dict(x=time_array,y=y)
 
 # Create the first text box set
