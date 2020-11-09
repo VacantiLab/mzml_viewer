@@ -18,7 +18,7 @@ from bokeh.events import DoubleTap
 from Convert import Convert
 
 print('loading dictionary 1')
-StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file1.p'
+StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/YY2019060827/file1.p'
 with open(StorageFile, 'rb') as PickleFile:
     input1 = pickle.load(PickleFile)
 
@@ -42,13 +42,13 @@ for i in range(0,len(blank_data)):
     blank_data[i] = np.nan
 
 print('loading dictionary 2')
-StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file2.p'
+StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/YY2019060827/file2.p'
 with open(StorageFile, 'rb') as PickleFile:
     input2 = pickle.load(PickleFile)
 mz_TimePointIndex_dict = input2
 
 print('loading dictionary 3')
-StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file3.p'
+StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/YY2019060827/file3.p'
 with open(StorageFile, 'rb') as PickleFile:
     input3 = pickle.load(PickleFile)
 mz_intensity_dict = input3

@@ -10,7 +10,7 @@ def Convert(mzLower,mzUpper):
     from pdb import set_trace
 
     # Specify the mzml file
-    mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/2018_1016_10.mzML'
+    mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/Tryptophan/YY2019060827.mzML'
 
     # Read the mzML file as an iterable object
     MZML = mzml.read(mzml_file_directory,dtype=dict)
@@ -75,7 +75,7 @@ def Convert(mzLower,mzUpper):
 
     # save the desired outputs as a pickle file
     output = [time_array,unique_mzs,time_mz_dict,time_intensity_dict,time_mz_dict_limited,time_intensity_dict_limited,tic_array,n_scans,mzLower,mzUpper]
-    StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file1.p'
+    StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/YY2019060827/file1.p'
     with open(StorageFile, 'wb') as PickleFile:
         pickle.dump(output,PickleFile)
 
@@ -114,11 +114,11 @@ def Convert(mzLower,mzUpper):
         if time_point_index%100 == 0:
             print('time point index = '+ str(time_point_index))
 
-    StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file2.p'
+    StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/YY2019060827/file2.p'
     with open(StorageFile, 'wb') as PickleFile:
         pickle.dump(mz_TimePointIndex_dict,PickleFile)
 
-    StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/2018_10_16_10/2018_1016_10_file3.p'
+    StorageFile = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/pickle_files/YY2019060827/file3.p'
     with open(StorageFile, 'wb') as PickleFile:
         pickle.dump(mz_intensity_dict,PickleFile)
 
