@@ -6,8 +6,10 @@ def Convert(mzLower,mzUpper):
 
     from pyteomics import mzml, auxiliary
     import numpy as np
-    import pickle
     from pdb import set_trace
+    import hdfdict
+
+    HDF5_file_directory = '/Users/nate/Desktop/temporary/test.hdf5'
 
     # Specify the mzml file
     mzml_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/PolyMID/correction_program/references/mzml_files/Tryptophan/YY2019060827.mzML'
@@ -33,45 +35,41 @@ def Convert(mzLower,mzUpper):
     # Initialize the total ion chromatograph array
     tic_array = np.array([])
 
-    TimeMZFile = '/Users/nate/Desktop/temporary/TimeMZ.txt'
-    TimeIntensityFile = '/Users/nate/Desktop/temporary/TimeIntensity.txt'
 
-
-    with open(TimeMZFile, 'a') as TimeMZ:
     # Iterate through the scnas of the iterable object of the mzML file
-        i=0
-        for key in MZML:
-            # get the current time associated with the current scan
-            time_point = float(key['scanList']['scan'][0]['scan start time'])
-            time_array = np.append(time_array,time_point)
+    i=0
+    for key in MZML:
+        # get the current time associated with the current scan
+        time_point = float(key['scanList']['scan'][0]['scan start time'])
+        time_array = np.append(time_array,time_point)
 
-            # get all of the mz values scanned in the current scan
-            mzs = np.array(key['m/z array'],dtype='float')
+        # get all of the mz values scanned in the current scan
+        mzs = np.array(key['m/z array'],dtype='float')
 
-            # get the intensities associated with those mz values
-            intensities = np.array(key['intensity array'],dtype='float')
+        # get the intensities associated with those mz values
+        intensities = np.array(key['intensity array'],dtype='float')
 
-            # get the value of the sum of all ions at the current time point
-            tic = sum(intensities)
-            tic_array = np.append(tic_array,tic)
+        # get the value of the sum of all ions at the current time point
+        tic = sum(intensities)
+        tic_array = np.append(tic_array,tic)
 
-            # store the mz values and intensity values in their corresponding dictionaries
-            time_mz_dict[time_point] = mzs
-            time_intensity_dict[time_point] = intensities
+        # store the mz values and intensity values in their corresponding dictionaries
+        time_mz_dict[str(time_point)] = mzs
+        time_intensity_dict[str(time_point)] = intensities
 
-            #write to file
-            mzList = mzs.tolist()
-            g = " ".join([str(i) for i in mzList])
-            TimeMZ.write(g + '\n')
+        # track the unique mz values across all scans
+        unique_mzs = np.append(unique_mzs,mzs)
+        unique_mzs = np.unique(unique_mzs)
 
+        i = i+1
+        if i%100 == 0:
+            print(i)
 
-            # track the unique mz values across all scans
-            unique_mzs = np.append(unique_mzs,mzs)
-            unique_mzs = np.unique(unique_mzs)
+        #if i >= 200:
+        #    break
 
-            i = i+1
-            if i%100 == 0:
-                print(i)
+    hdfdict.dump(time_mz_dict,HDF5_file_directory)
+    set_trace()
 
     n_scans=i
 
