@@ -90,6 +90,8 @@ def Convert():
 
     IntensityArrayPlot = np.zeros(n_scans)
 
+
+    #Use for intensity vs. time for mz range plots
     # Iterate over the time points
     time_point_index = 0
     for time_point in time_array:
