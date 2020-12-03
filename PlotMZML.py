@@ -82,6 +82,9 @@ def callback(event):
     intesity_vs_mz_plot_source.data = dict(x=TimeMZDict[str(x_index)], y=TimeIntensityDict[str(y_index)])
 intensity_vs_time_plot.on_event(DoubleTap, callback)
 
+#####Need to Fix UpdateMZ callbacks!!
+
+
 # Create the callback to change the mz plotted for the 1st line
 def UpdateMZ(attrname, old, new):
     BoxValue = MZ1.value
