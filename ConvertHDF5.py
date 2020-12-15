@@ -1,8 +1,5 @@
 def Convert():
-# Inputs:
-#   mzLower: This is the lower bound of the mz range that can be plotted vs. time
-#   mzUpper: This is the upper bound of the mz range that can be plotted vs. time
-# This function opens a mzML file that is hard-coded for now
+# This function converts an mzML file to a HDF5 file in a form readable by PlotMZML.py
 
     from pyteomics import mzml, auxiliary
     import numpy as np
@@ -20,20 +17,18 @@ def Convert():
     # Read the mzML file as an iterable object
     MZML = mzml.read(mzml_file_directory,dtype=dict)
 
-    # Initialize array of all time points
-    time_array = np.array([])
-
-    # Initialize array of unique mz values measured
-    unique_mzs = np.array([])
 
     # Initialize dictionaries with time points as the keys
     time_mz_dict = {}
     time_intensity_dict = {}
+    time_mz_dict['tic'] = np.array([])
+    time_mz_dict['time'] = np.array([])
 
     # Initialize dictionaries with time points as keys
     #     these only include the mz values specified by mzLower and mzUpper
     time_mz_dict_limited = {}
     time_intensity_dict_limited = {}
+
 
     # Initialize the total ion chromatograph array
     tic_array = np.array([])
@@ -45,7 +40,6 @@ def Convert():
     for key in MZML:
         # get the current time associated with the current scan
         time_point = float(key['scanList']['scan'][0]['scan start time'])
-        time_array = np.append(time_array,time_point)
 
         # get all of the mz values scanned in the current scan
         mzs = np.array(key['m/z array'],dtype='float')
@@ -61,6 +55,8 @@ def Convert():
 
         # store the mz values and intensity values in their corresponding dictionaries
         time_mz_dict[str(time_point)] = mzs
+        time_mz_dict['tic'] = np.append(time_mz_dict['tic'],tic)
+        time_mz_dict['time'] = np.append(time_mz_dict['time'],time_point)
         time_intensity_dict[str(time_point)] = intensities
 
         # Find another way to get unique MZs - from dictionary already made! This takes too much time
@@ -81,25 +77,3 @@ def Convert():
     print('writing files')
     hdfdict.dump(time_mz_dict,time_mz_HDF5_file_directory)
     hdfdict.dump(time_intensity_dict,time_intensity_HDF5_file_directory)
-
-
-    # variables to save: time_mz_dict, time_intensity_dict, time_array, unique_mzs, tic_array, n_scans
-
-    LowerM = 255
-    UpperM = 256
-
-    IntensityArrayPlot = np.zeros(n_scans)
-
-
-    #Use for intensity vs. time for mz range plots
-    # Iterate over the time points
-    time_point_index = 0
-    for time_point in time_array:
-        # Iterate over the mz values scanned at the current time point
-        indices = (time_mz_dict[str(time_point)] <= UpperM) & (time_mz_dict[str(time_point)] >= LowerM)
-        IntensityArrayPlot[time_point_index] = sum(time_intensity_dict[str(time_point)][indices])
-
-        # Iterate to the next time point
-        time_point_index = time_point_index + 1
-        if time_point_index%100 == 0:
-            print('time point index = '+ str(time_point_index))

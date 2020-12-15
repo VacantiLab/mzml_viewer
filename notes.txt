@@ -1,3 +1,5 @@
-ConvertTextFile.py is the beginnings of storing data as an HDF5 file.
+Most up to date as of 2020-12-15 is:
+PlotMZML.py
+Convert() in ConvertHDF5.py must be run first
 
 https://docs.h5py.org/en/stable/quick.html#quick has starting point
