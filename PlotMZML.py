@@ -17,8 +17,8 @@ from bokeh.events import DoubleTap
 
 
 print('Loading Dictionaries')
-time_mz_HDF5_file_directory = '/Users/nate/Desktop/temporary/time_mz.hdf5'
-time_intensity_HDF5_file_directory = '/Users/nate/Desktop/temporary/time_intensity.hdf5'
+time_mz_HDF5_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/mzml_viewer/HDF5_mzML_Files/time_mz.hdf5'
+time_intensity_HDF5_file_directory = '/Users/nate/Dropbox/Research/Vacanti_Laboratory/projects/mzml_viewer/HDF5_mzML_Files/time_intensity.hdf5'
 
 with h5py.File(time_mz_HDF5_file_directory, "r") as hf1, h5py.File(time_intensity_HDF5_file_directory, "r") as hf2:
 
@@ -72,80 +72,85 @@ def callback(event):
         intesity_vs_mz_plot_source.data = dict(x=np.array(hf1.get(str(x_index))), y=np.array(hf2.get(str(y_index))))
 intensity_vs_time_plot.on_event(DoubleTap, callback)
 
-    # # Create the callback to change the mz plotted for the 1st line
-    # def UpdateMZ(attrname, old, new):
-    #     BoxValue = MZ1.value
-    #     # Obtain the mz range that is plotted
-    #     #     The range is centered on BoxValue
-    #     BinValue = float(MZ1Bin.value)
-    #     if (BoxValue != 'tic') & (BoxValue != 'blank'):
-    #         mz = float(BoxValue)
-    #         UpperM = mz+BinValue
-    #         LowerM = mz-BinValue
-    #         TimePointIndex = 0
-    #         IntensityArrayPlot = np.zeros(nScans)
-    #         for TimePoint in TimeArray:
-    #             # Iterate over the mz values scanned at the current time point
-    #             indices = (TimeMZDict[str(TimePoint)] <= UpperM) & (TimeMZDict[str(TimePoint)] >= LowerM)
-    #             IntensityArrayPlot[TimePointIndex] = sum(TimeIntensityDict[str(TimePoint)][indices])
-    #             # Iterate to the next time point
-    #             TimePointIndex = TimePointIndex + 1
-    #         y = IntensityArrayPlot
-    #     if BoxValue == 'tic':
-    #         y = TicArray
-    #     if BoxValue == 'blank':
-    #         y = BlankData
-    #     intensity_vs_time_plot_source.data = dict(x=TimeArray,y=y)
-    #
-    # # Create the callback to change the mz plotted for the 2nd line
-    # def UpdateMZ2(attrname, old, new):
-    #     BoxValue = MZ2.value
-    #     BinValue = float(MZ2Bin.value)
-    #     if (BoxValue != 'tic') & (BoxValue != 'blank'):
-    #         mz = float(BoxValue)
-    #         UpperM = mz+BinValue
-    #         LowerM = mz-BinValue
-    #         TimePointIndex = 0
-    #         IntensityArrayPlot = np.zeros(nScans)
-    #         for TimePoint in TimeArray:
-    #             # Iterate over the mz values scanned at the current time point
-    #             indices = (TimeMZDict[str(TimePoint)] <= UpperM) & (TimeMZDict[str(TimePoint)] >= LowerM)
-    #             IntensityArrayPlot[TimePointIndex] = sum(TimeIntensityDict[str(TimePoint)][indices])
-    #             # Iterate to the next time point
-    #             TimePointIndex = TimePointIndex + 1
-    #         y = IntensityArrayPlot
-    #     if BoxValue == 'tic':
-    #         y = TicArray
-    #     if BoxValue == 'blank':
-    #         y = BlankData
-    #     intensity_vs_time_plot_source2.data = dict(x=TimeArray,y=y)
-    #
-    # # Create the first text box set
-    # #     The Bin is the box that sets the range of the mz values included
-    # MZ1 = TextInput(title = 'mz1', value=str('tic')) #the textbox widget, the value must be a string
-    # MZ1.on_change('value',UpdateMZ)
-    # MZ1Bin = TextInput(title='mz1 window', value=str(0))
-    # MZ1Bin.on_change('value',UpdateMZ)
-    #
-    # # Create the second text box set
-    # #     The Bin is the box that sets the range of the mz values included
-    # MZ2 = TextInput(title = 'mz2', value=str('blank')) #the textbox widget, the value must be a string
-    # MZ2.on_change('value',UpdateMZ2)
-    # MZ2Bin = TextInput(title='mz2 window', value=str(0))
-    # MZ2Bin.on_change('value',UpdateMZ2)
+# Create the callback to change the mz plotted for the 1st line
+def UpdateMZ(attrname, old, new):
+    with h5py.File(time_mz_HDF5_file_directory, "r") as hf1, h5py.File(time_intensity_HDF5_file_directory, "r") as hf2:
+        BoxValue = MZ1.value
+        # Obtain the mz range that is plotted
+        #     The range is centered on BoxValue
+        BinValue = float(MZ1Bin.value)
+        if (BoxValue != 'tic') & (BoxValue != 'blank'):
+            mz = float(BoxValue)
+            UpperM = mz+BinValue
+            LowerM = mz-BinValue
+            TimePointIndex = 0
+            IntensityArrayPlot = np.zeros(nScans)
+            for TimePoint in TimeArray:
+                # Iterate over the mz values scanned at the current time point
+                indices = (np.array(hf1.get(str(TimePoint))) <= UpperM) & (np.array(hf1.get(str(TimePoint))) >= LowerM)
+                IntensityArrayPlot[TimePointIndex] = sum(np.array(hf2.get(str(TimePoint)))[indices])
+                # Iterate to the next time point
+                TimePointIndex = TimePointIndex + 1
+            y = IntensityArrayPlot
+        if BoxValue == 'tic':
+            y = TicArray
+        if BoxValue == 'blank':
+            y = BlankData
+        intensity_vs_time_plot_source.data = dict(x=TimeArray,y=y)
 
 
-    # l = layout([
-    #   [MZ1,MZ1Bin],
-    #   [MZ2,MZ2Bin],
-    #   [intensity_vs_time_plot],
-    #   [intesity_vs_mz_plot],
+# Create the callback to change the mz plotted for the 2nd line
+def UpdateMZ2(attrname, old, new):
+    with h5py.File(time_mz_HDF5_file_directory, "r") as hf1, h5py.File(time_intensity_HDF5_file_directory, "r") as hf2:
+        BoxValue = MZ2.value
+        BinValue = float(MZ2Bin.value)
+        if (BoxValue != 'tic') & (BoxValue != 'blank'):
+            mz = float(BoxValue)
+            UpperM = mz+BinValue
+            LowerM = mz-BinValue
+            TimePointIndex = 0
+            IntensityArrayPlot = np.zeros(nScans)
+            for TimePoint in TimeArray:
+                # Iterate over the mz values scanned at the current time point
+                indices = (np.array(hf1.get(str(TimePoint))) <= UpperM) & (np.array(hf1.get(str(TimePoint))) >= LowerM)
+                IntensityArrayPlot[TimePointIndex] = sum(np.array(hf2.get(str(TimePoint)))[indices])
+                # Iterate to the next time point
+                TimePointIndex = TimePointIndex + 1
+            y = IntensityArrayPlot
+        if BoxValue == 'tic':
+            y = TicArray
+        if BoxValue == 'blank':
+            y = BlankData
+        intensity_vs_time_plot_source2.data = dict(x=TimeArray,y=y)
+
+# Create the first text box set
+#     The Bin is the box that sets the range of the mz values included
+MZ1 = TextInput(title = 'mz1', value=str('tic')) #the textbox widget, the value must be a string
+MZ1.on_change('value',UpdateMZ)
+MZ1Bin = TextInput(title='mz1 window', value=str(0))
+MZ1Bin.on_change('value',UpdateMZ)
+
+# Create the second text box set
+#     The Bin is the box that sets the range of the mz values included
+MZ2 = TextInput(title = 'mz2', value=str('blank')) #the textbox widget, the value must be a string
+MZ2.on_change('value',UpdateMZ2)
+MZ2Bin = TextInput(title='mz2 window', value=str(0))
+MZ2Bin.on_change('value',UpdateMZ2)
 
 
 l = layout([
-  [intensity_vs_time_plot],
-  [intesity_vs_mz_plot],
-], sizing_mode='fixed')
+    [MZ1,MZ1Bin],
+    [MZ2,MZ2Bin],
+    [intensity_vs_time_plot],
+    [intesity_vs_mz_plot],
+  ], sizing_mode='fixed')
+
+
+# l = layout([
+#   [MZ1,MZ1Bin],
+#   [intensity_vs_time_plot],
+#   [intesity_vs_mz_plot],
+# ], sizing_mode='fixed')
 
 
 curdoc().add_root(l)

@@ -5,7 +5,6 @@ def Convert():
     from pyteomics import mzml, auxiliary
     import numpy as np
     from pdb import set_trace
-    import hdfdict
     import h5py
 
     time_mz_HDF5_file_directory = '/Users/nate/Desktop/temporary/time_mz.hdf5'
@@ -66,8 +65,8 @@ def Convert():
             if i%200 == 0:
                 print('Reading mzML scan number: ' + str(i))
 
-            if i >= 200:
-                break
+            #if i >= 200:
+            #    break
 
         hf1.create_dataset('tic', data=tics)
         hf1.create_dataset('time', data=times)
